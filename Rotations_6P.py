@@ -9,7 +9,7 @@ MB2 = "MB2"
 OPP = "Oppo"
 
 # --- Initial Lineup (Rotation 1) --- Ordered from Position 1 to Position 6
-initial_lineup = [S, OH1, MB1, OH2, MB2, OPP]
+initial_lineup = [S, OH1, MB1, OPP, OH2, MB2]
 
 # --- Rotation Logic ---
 def rotate_clockwise(current_lineup):
