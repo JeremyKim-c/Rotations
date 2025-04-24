@@ -55,6 +55,12 @@ def display_rotation_7P(lineup, position, rotation_number):
 
     # --- Print Output ---
     print(f"\n--- Rotation {rotation_number} ---")
+
+    # Determine the player who is OUT
+    out_player = lineup[1] 
+    out_position = position[1]
+    print(f"{out_player} ({out_position}) is OUT")
+
     if 'S' in position:
         setter_index = position.index('S') + 1
         if setter_index == 1:
