@@ -38,7 +38,7 @@ def display_rotation_7P(lineup, position, rotation_number):
     # --- Formatting Constants ---
     player_col_width = 12 # Width for the player name/role cell content (adjust if needed)
     pos_label_width = player_col_width # Width for the (Pos X) label cell content
-    first_col_label = "| Net |"
+    first_col_label = "|^Net^|"
     first_col_spacer = "|     |" # Must be same length as first_col_label
     first_col_width = len(first_col_label) # Width of the first column including pipes
 
@@ -52,6 +52,7 @@ def display_rotation_7P(lineup, position, rotation_number):
     separator_line = f"|{first_separator}|{player_separator}|{player_separator}|{player_separator}|"
     total_width = len(separator_line)
     border_line = "-" * total_width
+    net_line = "#" * total_width
 
     # --- Print Output ---
     print(f"\n--- Rotation {rotation_number} ---")
@@ -70,7 +71,7 @@ def display_rotation_7P(lineup, position, rotation_number):
         else:
             print(f"Setter is in Position: {setter_index - 1}")
 
-    print(f"{offset}{border_line}") # Top row of ----
+    print(f"{offset}{net_line}") # Top row of ####
     # Front Row Players (Pos 4, 3, 2)
     print(f"{offset}{first_col_label}  {pos4_player:<{player_col_width}}|  {pos3_player:<{player_col_width}}|  {pos2_player:<{player_col_width}}|") # Top Row of Names
     print(f"{offset}{separator_line}{flex_separator}")
@@ -106,7 +107,7 @@ def run_rotation_app_7P():
     while True:
         display_rotation_7P(current_lineup, current_position, rotation_count)
 
-        user_input = input("\nPress Enter to ROTATE, or type 'q' to QUIT: ").strip().lower()
+        user_input = input("\nPress Enter to ROTATE, 'r' to reset, or type 'q' to QUIT: ").strip().lower()
 
         if user_input == 'q':
             print("Exiting the rotation simulator.")
