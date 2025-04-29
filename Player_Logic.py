@@ -1,4 +1,6 @@
 import copy
+from Rotations_6P import initialize_roster_6P
+from Rotations_7P import initialize_roster_7P
 
 class Vertex: 
 
@@ -346,6 +348,47 @@ def vertex_saturated(v, M):
 
 	return False
 
+
+def get_G():
+	"""
+	Initialize the G (Weighted Bipartite Graph)
+	"""
+	num_players = int(input("Enter the number of players (6 or 7): ").strip())
+	initial_lineup = []
+	position_preferences = {}
+	for i in range(num_players):
+		'''Initialize the roster based on the number of players.'''
+		player_name = input(f"Enter name for Player {i + 1}: ").strip()
+		initial_lineup.append(player_name)
+		current_player_prefs = {}
+
+		for j in range(3):
+			preference_level = j + 1
+			score = 3 - j
+
+			if preference_level == 1:
+				placeholder = "1st"
+			elif preference_level == 2:
+				placeholder = "2nd"
+			else:
+				placeholder = "3rd"
+
+			position_name = input(f"Enter {placeholder} preferred position for {player_name} (S, OH, MB, OPP, FLEX): ").strip()
+
+			if position_name:
+				if position_name in current_player_prefs:
+					print(f"Warning: Position '{position_name}' already entered for {player_name}. "
+                          f"Keeping the highest preference score ({max(score, current_player_prefs[position_name])}).")
+				else:
+					current_player_prefs[position_name] = score
+			else:
+				print(f"Warning: No position entered for {placeholder} preference for {player_name}.")
+		
+		position_preferences[player_name] = current_player_prefs
+	
+	return position_preferences
+
+
 def find_matching(_G, matching_type = 'max', return_type = 'list'):
 	'''Find maximum/minimum-weighted matching.
 
@@ -472,7 +515,7 @@ def find_matching(_G, matching_type = 'max', return_type = 'list'):
 				S.add(z)
 				T.add(y)
 
-	edge_multiple = -1 if matching_type == 'min' else 1;
+	edge_multiple = -1 if matching_type == 'min' else 1
 	if return_type == 'list':
 		return list(map(lambda e: ((e.vertices[0], e.vertices[1]), edge_multiple * e.weight), M))
 	elif return_type == 'total':
