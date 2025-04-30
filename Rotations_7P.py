@@ -1,20 +1,26 @@
 import sys
 from Rotations_6P import rotate_clockwise
 
-def initialize_roster_7P():
-    # --- Player Roles ---
-    S = input("Enter Setter's Name: ").strip() or "Shubham"
-    OH1 = input("Enter Outside Hitter 1's Name: ").strip() or "Jeremy"  
-    OH2 = input("Enter Outside Hitter 2's Name: ").strip() or "Tony"  
-    MB1 = input("Enter Middle Blocker 1's Name: ").strip() or "Eddy"  
-    MB2 = input("Enter Middle Blocker 2's Name: ").strip() or "Tashi"  
-    OPP = input("Enter Opposite's Name: ").strip() or "Aron" 
-    FLEX = input("Enter Flexer's Name: ").strip() or "Flex" 
-    print() 
+def initialize_roster_7P(custom_lineup=None):
+    if custom_lineup:
+        if len(custom_lineup) != 7:
+            raise ValueError("Custom lineup must contain exactly 6 players.")
+        initial_lineup = [player for player, _ in custom_lineup]
+        initial_position = [position for _, position in custom_lineup]
+    else:
+        # --- Player Roles ---
+        S = input("Enter Setter's Name: ").strip() or "Shubham"
+        OH1 = input("Enter Outside Hitter 1's Name: ").strip() or "Jeremy"  
+        OH2 = input("Enter Outside Hitter 2's Name: ").strip() or "Tony"  
+        MB1 = input("Enter Middle Blocker 1's Name: ").strip() or "Eddy"  
+        MB2 = input("Enter Middle Blocker 2's Name: ").strip() or "Tashi"  
+        OPP = input("Enter Opposite's Name: ").strip() or "Aron" 
+        FLEX = input("Enter Flexer's Name: ").strip() or "Flex" 
+        print() 
 
-    # --- Initial Lineup (Rotation 1) --- Ordered from Position 1 to Position 6 with Flex
-    initial_lineup = [S, FLEX, OH1, MB1, OPP, OH2, MB2]
-    initial_position = ["S", "Flex", "OH1", "MB1", "OPP", "OH2", "MB2"]
+        # --- Initial Lineup (Rotation 1) --- Ordered from Position 1 to Position 6 with Flex
+        initial_lineup = [S, FLEX, OH1, MB1, OPP, OH2, MB2]
+        initial_position = ["S", "Flex", "OH_1", "MB_1", "OPP", "OH_2", "MB_2"]
 
     return initial_lineup, initial_position
 
@@ -97,9 +103,9 @@ def display_rotation_7P(lineup, position, rotation_number):
 
 
 # --- Main Application Loop ---
-def run_rotation_app_7P():
+def run_rotation_app_7P(custom_lineup=None):
 
-    initial_lineup, initial_position = initialize_roster_7P()
+    initial_lineup, initial_position = initialize_roster_7P(custom_lineup)
     current_lineup = initial_lineup[:] 
     current_position = initial_position[:]
     rotation_count = 1
@@ -107,7 +113,7 @@ def run_rotation_app_7P():
     while True:
         display_rotation_7P(current_lineup, current_position, rotation_count)
 
-        user_input = input("\nPress Enter to ROTATE, 'r' to reset, or type 'q' to QUIT: ").strip().lower()
+        user_input = input("\nPress Enter to ROTATE, 'r' to reset, '1' to swap OHs, '2' to swap MBs, or 'q' to QUIT: ").strip().lower()
 
         if user_input == 'q':
             print("Exiting the rotation simulator.")
@@ -120,5 +126,13 @@ def run_rotation_app_7P():
         elif user_input == '':
             current_lineup, current_position = rotate_clockwise(current_lineup, current_position)
             rotation_count = (rotation_count % 6) + 1 # Cycle through 1-6
+        elif user_input == '1':
+            current_lineup[2], current_lineup[5] = current_lineup[5], current_lineup[2]
+            current_position[2], current_position[5] = current_position[5], current_position[2]
+            print("\nSwapped Outside Hitters (OH_1 and OH_2).")
+        elif user_input == '2': 
+            current_lineup[3], current_lineup[6] = current_lineup[6], current_lineup[3]
+            current_position[3], current_position[6] = current_position[6], current_position[3]
+            print("\nSwapped Middle Blockers (MB_1 and MB_2).")
         else:
             print("Invalid input. Please press Enter or type 'q'.")

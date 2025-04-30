@@ -350,44 +350,131 @@ def vertex_saturated(v, M):
 
 
 def get_G():
-	"""
-	Initialize the G (Weighted Bipartite Graph)
-	"""
-	num_players = int(input("Enter the number of players (6 or 7): ").strip())
-	initial_lineup = []
-	position_preferences = {}
-	for i in range(num_players):
-		'''Initialize the roster based on the number of players.'''
-		player_name = input(f"Enter name for Player {i + 1}: ").strip()
-		initial_lineup.append(player_name)
-		current_player_prefs = {}
+    """
+    Gets player preferences and constructs the bipartite graph dictionary 
+    needed for the Hungarian algorithm, enforcing position slot constraints.
+    Includes a pre-check to warn about potentially unfilled positions.
+    """
+    num_players = int(input("Enter the number of players (6 or 7): ").strip())
+    if num_players not in [6, 7]:
+        print("Error: Only 6 or 7 players are supported for this setup.")
+        return None, None # Return None if invalid input
 
-		for j in range(3):
-			preference_level = j + 1
-			score = 3 - j
+    initial_lineup = []
+    position_preferences = {}
+    print("\nEnter player names and preferences (Positions: S, OH, MB, OPP, FLEX)")
+    print("Preferences are scored: 1st=2, 2nd=1. Enter 0 or leave blank if no preference.")
 
-			if preference_level == 1:
-				placeholder = "1st"
-			elif preference_level == 2:
-				placeholder = "2nd"
-			else:
-				placeholder = "3rd"
+    # Define allowed position types
+    allowed_positions = ["S", "OH", "MB", "OPP", "FLEX"]
 
-			position_name = input(f"Enter {placeholder} preferred position for {player_name} (S, OH, MB, OPP, FLEX): ").strip()
-
-			if position_name:
-				if position_name in current_player_prefs:
-					print(f"Warning: Position '{position_name}' already entered for {player_name}. "
-                          f"Keeping the highest preference score ({max(score, current_player_prefs[position_name])}).")
-				else:
-					current_player_prefs[position_name] = score
-			else:
-				print(f"Warning: No position entered for {placeholder} preference for {player_name}.")
+    for i in range(num_players):
+        player_name = input(f"\nEnter name for Player {i + 1}: ").strip()
+        if not player_name: 
+             print("Player name cannot be empty. Please try again.")
+             return None, None 
 		
-		position_preferences[player_name] = current_player_prefs
-	
-	return position_preferences
+        initial_lineup.append(player_name)
+        current_player_prefs = {}
 
+		# TODO: Make it impossible to skip both preferences for a player
+        print(f"Enter preferences for {player_name}:")
+        temp_prefs = {} 
+        for j in range(2):
+            pref_rank_str = {1: "1st", 2: "2nd"}[j + 1]
+            score = 2 - j
+            while True:
+                position_name = input(f"  Enter {pref_rank_str} preferred position (or leave blank to skip): ").strip().upper()
+                if not position_name:  # Allow skipping preferences
+                    print(f"  Skipping {pref_rank_str} preference for {player_name}.")
+                    break  # Move to next preference rank
+                if position_name not in allowed_positions:
+                    print(f"  Invalid position '{position_name}'. Allowed: {', '.join(allowed_positions)}. Try again.")
+                elif position_name in temp_prefs:
+                    print(f"  Position '{position_name}' already entered with rank {temp_prefs[position_name]}. Try again.")
+                else:
+                    current_player_prefs[position_name] = score
+                    temp_prefs[position_name] = pref_rank_str
+                    break  # Valid input, move to next preference rank
+        
+        position_preferences[player_name] = current_player_prefs
+
+    # --- Pre-Check for Position Coverage ---
+    required_slots_info = {"OH": 2, "MB": 2, "S": 1, "OPP": 1}
+    player_counts_for_type = {"OH": 0, "MB": 0, "S": 0, "OPP": 0}
+	# TODO: Section above can be modified to include libero or other positions if needed. Logic will need to be adjusted within Rotations_6P and Rotations_7P.
+
+    for player_prefs in position_preferences.values():
+        if player_prefs.get("OH", 0) > 0:
+            player_counts_for_type["OH"] += 1
+        elif player_prefs.get("FLEX", 0) > 0:
+            player_counts_for_type["OH"] += 1
+
+        if player_prefs.get("MB", 0) > 0:
+            player_counts_for_type["MB"] += 1
+        elif player_prefs.get("FLEX", 0) > 0:
+            player_counts_for_type["MB"] += 1
+
+        if player_prefs.get("S", 0) > 0:
+            player_counts_for_type["S"] += 1
+        elif player_prefs.get("FLEX", 0) > 0:
+            player_counts_for_type["S"] += 1
+
+        if player_prefs.get("OPP", 0) > 0:
+            player_counts_for_type["OPP"] += 1
+        elif player_prefs.get("FLEX", 0) > 0:
+            player_counts_for_type["OPP"] += 1
+
+    missing_coverage = []
+    for pos_type, needed_count in required_slots_info.items():
+        if player_counts_for_type[pos_type] < needed_count:
+            missing_coverage.append(f"{pos_type} (Need {needed_count}, Found {player_counts_for_type[pos_type]})")
+
+    if missing_coverage:
+        print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print("!!! Warning: Potential Roster Problem! !!!")
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print("The following positions do not have enough players expressing *any* preference:")
+        for item in missing_coverage:
+            print(f"  - {item}")
+        print("The assignment may place players in positions they did not prefer (score 0).")
+        proceed = input("Continue with assignment anyway? (y/n): ").lower()
+        if proceed != 'y':
+            print("Assignment aborted by user.")
+            return None, None # Stop if user doesn't want to proceed
+        print("-" * 40) # Separator
+    # --- End of Pre-Check ---
+
+
+    # --- Define the Target Slots ---
+    target_slots = ["OH_1", "OH_2", "MB_1", "MB_2", "S", "OPP"]
+    
+    assignment_slots = target_slots[:]
+    players = initial_lineup[:]
+
+    # --- Add Flex Slot if 7 players ---
+    if num_players == 7:
+        assignment_slots.append("FLEX")
+    
+    # --- Construct the _G dictionary for the Graph class ---
+    _G = {}
+    for player in players:
+        player_prefs = position_preferences.get(player, {})
+        _G[player] = {}
+        for slot in assignment_slots:
+            if slot == "FLEX":
+                score = 0 
+            else:
+                # Extract position type (e.g., "OH_1" -> "OH")
+                position_type = slot.split('_')[0]
+                # Get score for the specific type, default to 0
+                score = player_prefs.get(position_type, 0)
+                # --- Optional: Handle FLEX preference ---
+                # if score == 0 and player_prefs.get('FLEX', 0) > 0:
+                #     score = player_prefs.get('FLEX', 0) # Example: FLEX fills in if no specific pref
+            _G[player][slot] = score
+            
+    return _G, num_players # Return graph data and number of players
 
 def find_matching(_G, matching_type = 'max', return_type = 'list'):
 	'''Find maximum/minimum-weighted matching.
